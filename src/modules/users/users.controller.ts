@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { UsersService } from './users.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
+import { FindUsersQueryDto } from './dto/find-users-query.dto.js';
 
 @Controller('users')
 export class UsersController {
@@ -9,12 +10,13 @@ export class UsersController {
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
+    
     return this.usersService.create(createUserDto);
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query() query: FindUsersQueryDto) {
+    return this.usersService.findAll(query);
   }
 
   @Get(':id')

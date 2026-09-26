@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  name      String
+  email     String     @unique
+  password  String
+  isActive  Boolean    @default(true) @map("is_active")
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  documents Document[]
+
+  @@map("users")
+}
+
+model Document {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  typeId    Int      @map("type_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user         User         @relation(fields: [userId], references: [id])
+  documentType DocumentType @relation(fields: [typeId], references: [id])
+
+  documentFiles  DocumentFile[]
+  rgs            Rg[]
+  cnhs           Cnh[]
+  electoralCards ElectoralCard[]
+
+  @@index([userId, typeId])
+  @@map("documents")
+}
+
+model DocumentFile {
+  id         Int      @id @default(autoincrement())
+  documentId Int      @map("document_id")
+  storageKey String   @map("storage_key")
+  mimeType   String   @map("mime_type")
+  size       BigInt
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  document Document @relation(fields: [documentId], references: [id])
+
+  @@map("document_files")
+}
+
+model DocumentType {
+  id          Int    @id @unique @default(autoincrement())
+  name        String
+  description String
+
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  documents Document[]
+
+  @@map("document_types")
+}
+
+model Rg {
+  id                    Int      @id @default(autoincrement())
+  documentId            Int      @unique @map("document_id")
+  issuingAuthority      String   @map("issuing_authority")
+  registerNumber        String   @map("register_number")
+  cpf                   String
+  militaryCertification String   @map("military_certification")
+  uf                    String
+  issueDate             DateTime @map("issue_date")
+
+  document Document @relation(fields: [documentId], references: [id])
+
+  @@map("rg")
+}
+
+model Cnh {
+  id             Int      @id @default(autoincrement())
+  documentId     Int      @unique @map("document_id")
+  registerNumber String   @map("register_number")
+  category       String
+  expirationDate DateTime @map("expiration_date")
+  issueDate      DateTime @map("issue_date")
+  document       Document @relation(fields: [documentId], references: [id])
+
+  @@map("cnh")
+}
+
+model ElectoralCard {
+  id                Int      @id @default(autoincrement())
+  documentId        Int      @unique @map("document_id")
+  voterRegistration String   @map("voter_registration")
+  zone              Int
+  section           Int
+  electoralCity     String   @map("electoral_city")
+  electoralState    String   @map("electoral_state")
+  document          Document @relation(fields: [documentId], references: [id])
+
+  @@map("electoral_cards")
+}

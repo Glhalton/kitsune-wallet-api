@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -27,7 +27,7 @@ model Document {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user         User         @relation(fields: [userId], references: [id])
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   documentType DocumentType @relation(fields: [typeId], references: [id])
 
   documentFiles  DocumentFile[]
@@ -48,14 +48,15 @@ model DocumentFile {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  document Document @relation(fields: [documentId], references: [id])
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
+  @@index([documentId])
   @@map("document_files")
 }
 
 model DocumentType {
-  id          Int    @id @unique @default(autoincrement())
-  name        String
+  id          Int    @id @default(autoincrement())
+  name        String @unique
   description String
 
   createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)

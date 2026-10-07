@@ -5,7 +5,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Prisma } from '../../../generated/prisma/client.js';
+import { Prisma } from '../../generated/prisma/client.js';
 
 type HttpError = { status: HttpStatus; message: string };
 

@@ -10,10 +10,6 @@ import {
 import { Trim } from '../../../common/validation/trim.decorator.js';
 
 export class CreateRgDto {
-  @IsInt()
-  @IsPositive()
-  documentId: number;
-
   @IsString()
   @Trim()
   @MinLength(2)

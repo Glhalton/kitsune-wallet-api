@@ -6,34 +6,60 @@ import {
 import { CreateRgDto } from './dto/create-rg.dto.js';
 import { UpdateRgDto } from './dto/update-rg.dto.js';
 import { PrismaService } from '../../database/prisma.service.js';
+import { DocumentsService } from '../documents/documents.service.js';
 
 @Injectable()
 export class RgService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: number, createRgDto: CreateRgDto) {
-    await this.findOwnedDocument(userId, createRgDto.documentId);
+    const documentType = await this.prisma.documentType.findUnique({
+      where: { name: 'RG' },
+    });
 
-    const existingRg = await this.prisma.rg.findUnique({
-      where: { documentId: createRgDto.documentId },
+    if (!documentType) {
+      throw new NotFoundException('Tipo de documento RG não encontrado');
+    }
+
+    const existingRg = await this.prisma.rg.findFirst({
+      where: {
+        document: {
+          userId,
+        },
+        cpf: createRgDto.cpf,
+      },
     });
 
     if (existingRg) {
       throw new ConflictException(
-        `Documento com id ${createRgDto.documentId} já possui um RG`,
+        `Já existe um RG cadastrado para o CPF ${createRgDto.cpf}`,
       );
     }
 
-    return this.prisma.rg.create({
-      data: {
-        documentId: createRgDto.documentId,
-        issuingAuthority: createRgDto.issuingAuthority,
-        registerNumber: createRgDto.registerNumber,
-        cpf: createRgDto.cpf,
-        militaryCertification: createRgDto.militaryCertification,
-        uf: createRgDto.uf,
-        issueDate: new Date(createRgDto.issueDate),
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const document = await tx.document.create({
+        data: {
+          userId,
+          typeId: documentType.id,
+        },
+      });
+
+      const rg = await tx.rg.create({
+        data: {
+          documentId: document.id,
+          issuingAuthority: createRgDto.issuingAuthority,
+          registerNumber: createRgDto.registerNumber,
+          cpf: createRgDto.cpf,
+          militaryCertification: createRgDto.militaryCertification,
+          uf: createRgDto.uf,
+          issueDate: new Date(createRgDto.issueDate),
+        },
+      });
+
+      return {
+        document,
+        rg,
+      };
     });
   }
 
@@ -43,13 +69,20 @@ export class RgService {
     });
   }
 
-  async findOne(userId: number, id: number) {
+  async findOne(userId: number, documentId: number) {
     const rg = await this.prisma.rg.findFirst({
-      where: { id, document: { userId } },
+      where: {
+        documentId,
+        document: {
+          userId,
+        },
+      },
     });
 
     if (!rg) {
-      throw new NotFoundException(`RG com id ${id} não encontrado`);
+      throw new NotFoundException(
+        `RG do documento ${documentId} não encontrado`,
+      );
     }
 
     return rg;

@@ -31,8 +31,11 @@ export class RgController {
   }
 
   @Get(':id')
-  findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.rgService.findOne(user.id, +id);
+  findOne(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') documentId: string,
+  ) {
+    return this.rgService.findOne(user.id, +documentId);
   }
 
   @Patch(':id')
